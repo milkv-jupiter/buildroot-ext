@@ -1,9 +1,9 @@
-MPP_VERSION := 0.1.0
+MPP_VERSION := 0.0.57
 MPP_SITE = $(TOPDIR)/../package-src/mpp
 MPP_SITE_METHOD = local
 MPP_SUPPORTS_IN_SOURCE_BUILD = NO
 MPP_INSTALL_STAGING = YES
-#MPP_DEPENDENCIES = jpeg libv4l libdrm
+MPP_DEPENDENCIES = sdl2
 
 # default CMAKE_INSTALL_PREFIX is $(TARGET_DIR)/usr, change to below
 # note: not have -DCROSS_COMPILE
@@ -18,6 +18,7 @@ define MPP_INSTALL_STAGING_CMDS
 	cp -rdpf $(@D)/utils/include/* $(STAGING_DIR)/usr/include/
 	cp -rdpf $(@D)/al/include/* $(STAGING_DIR)/usr/include/
 	cp -rdpf $(@D)/buildroot-build/mpi/libspacemit_mpp.so* $(STAGING_DIR)/usr/lib/
+	cp -rdpf $(@D)/buildroot-build/spacemit_mpp.pc $(STAGING_DIR)/usr/lib/pkgconfig/
 endef
 
 $(eval $(cmake-package))

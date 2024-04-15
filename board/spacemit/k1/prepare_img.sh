@@ -3,16 +3,14 @@
 ######################## Prepare sub-iamges and pack ####################
 #$0 is this file path
 #$1 is buildroot output images dir
-
+set -e
 IMGS_DIR=$1
 DEVICE_DIR=$(dirname $0)
 
 SRC_ROOTFS_FILE="$DEVICE_DIR/rootfs.ext4"
-FSBL_YML_FILE="$DEVICE_DIR/fsbl.yml"
-KERNEL_FIT_FILE="$DEVICE_DIR/kernel_fdt.its"
 PARTITIONS_FILE="$DEVICE_DIR/partition_universal.json"
 UENV_TXT_FILE="$DEVICE_DIR/env_k1-x.txt"
-UBOOT_LOGO_FILE="$DEVICE_DIR/k1-x.bmp"
+UBOOT_LOGO_FILE="$DEVICE_DIR/bianbu.bmp"
 
 #Give a chance to CI
 if [ -z "$BIANBU_LINUX_ARCHIVE" ]; then
@@ -23,8 +21,8 @@ fi
 
 TARGET_ROOTFS_FILE="$IMGS_DIR/rootfs.ext2"
 TARGET_BOOTFS_FILE="$IMGS_DIR/bootfs.img"
-#TARGET_INITRAMFS_FILE=("$IMGS_DIR/rootfs.cpio.gz")
-TARGET_INITRAMFS_FILE=("$IMGS_DIR/rootfs.cpio.uboot")
+TARGET_INITRAMFS_FILE=("$IMGS_DIR/rootfs.cpio.gz")
+#TARGET_INITRAMFS_FILE=("$IMGS_DIR/rootfs.cpio.uboot")
 
 BOOTFS_SIZE=$($IMGS_DIR/../host/bin/jq '.partitions[] | select(.name == "bootfs") | .size' "$PARTITIONS_FILE")
 BOOTFS_DIR="$IMGS_DIR/bootfs"
@@ -32,7 +30,7 @@ BOOTFS_IMG_FILE="$IMGS_DIR/bootfs.img"
 
 KERNEL_DTB_NAME="k1-x*.dtb"
 KERNEL_DTB_FILE="$IMGS_DIR/$KERNEL_DTB_NAME"
-KERNEL_IMAGE_FILE="$IMGS_DIR/uImage.itb"
+KERNEL_IMAGE_FILE="$IMGS_DIR/Image.itb"
 
 FAKE_ROOT_FILE=/tmp/$(whoami)-fakeroot
 
@@ -79,19 +77,7 @@ override_rootfs_img() {
 gen_sub_images() {
 
     #env.bin
-    rm -f ${IMGS_DIR}/env_k1-x.txt
-    cp -f ${UENV_TXT_FILE} ${IMGS_DIR}/
-    $IMGS_DIR/../host/bin/mkenvimage -s 0x4000 -o ${IMGS_DIR}/env.bin ${IMGS_DIR}/env_k1-x.txt
-    rm ${IMGS_DIR}/env_k1-x.txt
-
-    #Rename to opensbi.itb for the partition file
-    cp -f ${IMGS_DIR}/fw_dynamic.itb ${IMGS_DIR}/opensbi.itb
-
-    #Gen kernel Image dtb here
-    rm -f ${IMGS_DIR}/uImage.itb
-    cp -f ${KERNEL_FIT_FILE} ${IMGS_DIR}/kernel_fdt.its
-    $IMGS_DIR/../host/bin/mkimage -f ${IMGS_DIR}/kernel_fdt.its -r ${IMGS_DIR}/uImage.itb
-    rm ${IMGS_DIR}/kernel_fdt.its
+    cp -f ${IMGS_DIR}/u-boot-env-default.bin ${IMGS_DIR}/env.bin
 
 }
 
@@ -125,7 +111,7 @@ pack_image_zip() {
     #cp -f ${DEVICE_DIR}/partition_universal.json ${IMGS_DIR}/
     cd ${IMGS_DIR}
     zip ${TARGET_IMAGE_ZIP} \
-        opensbi.itb \
+        fw_dynamic.itb \
         u-boot.itb \
         env.bin \
         bootfs.img \
@@ -150,7 +136,7 @@ pack_image_zip() {
 }
 
 
-#FSBL opensbi uboot uImage
+#include env and Image
 gen_sub_images
 
 #Gen bootfs
